@@ -13,6 +13,12 @@ import BookRoom from './pages/BookRoom';
 import MyBookings from './pages/MyBookings';
 import Profile from './pages/Profile';
 
+import AdminRoute from './components/AdminRoute';
+import Dashboard from './pages/admin/Dashboard';
+import ManageRooms from './pages/admin/ManageRooms';
+import ManageUsers from './pages/admin/ManageUsers';
+import ManageBookings from './pages/admin/ManageBookings';
+
 function App() {
   return (
     <AuthProvider>
@@ -29,6 +35,13 @@ function App() {
             <Route path="rooms/:id/book" element={<BookRoom />} />
             <Route path="my-bookings" element={<MyBookings />} />
             <Route path="profile" element={<Profile />} />
+          </Route>
+
+          <Route path="/admin" element={<AdminRoute><Layout /></AdminRoute>}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="rooms" element={<ManageRooms />} />
+            <Route path="users" element={<ManageUsers />} />
+            <Route path="bookings" element={<ManageBookings />} />
           </Route>
         </Routes>
       </BrowserRouter>
