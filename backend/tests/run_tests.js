@@ -1,4 +1,17 @@
 const { spawn } = require('child_process');
+const Database = require('better-sqlite3');
+const fs = require('fs');
+const path = require('path');
+
+// Tạo DB tạm
+const dbFile = path.resolve(__dirname, 'temp_test.sqlite');
+if (fs.existsSync(dbFile)) fs.unlinkSync(dbFile);
+const db = new Database(dbFile);
+const schema = fs.readFileSync(path.resolve(__dirname, '../../database/schema.sql'), 'utf8');
+const seed = fs.readFileSync(path.resolve(__dirname, '../../database/seed.sql'), 'utf8');
+db.exec(schema);
+db.exec(seed);
+db.close();
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -6,7 +19,14 @@ async function sleep(ms) {
 
 async function runTests() {
     console.log('--- KHỞI ĐỘNG SERVER ---');
-    const server = spawn('node', ['server.js'], { stdio: 'inherit' });
+    const server = spawn('node', ['server.js'], { 
+        stdio: 'inherit',
+        env: {
+            ...process.env,
+            JWT_SECRET: 'test_secret_key_12345678',
+            DB_FILE: 'tests/temp_test.sqlite'
+        }
+    });
     
     // Đợi server khởi động
     await sleep(2000);
@@ -118,12 +138,104 @@ async function runTests() {
             }
         }
 
+        console.log('\\n--- BÀI TEST 6: SINH VIÊN ĐẶT LƯỢT THỨ 3/NGÀY BỊ TỪ CHỐI ---');
+        const d = new Date(); d.setDate(d.getDate() + 20);
+        d.setHours(8,0,0,0); const s1 = new Date(d);
+        d.setHours(10,0,0,0); const e1 = new Date(d);
+        d.setHours(11,0,0,0); const s2 = new Date(d);
+        d.setHours(13,0,0,0); const e2 = new Date(d);
+        d.setHours(14,0,0,0); const s3 = new Date(d);
+        d.setHours(16,0,0,0); const e3 = new Date(d);
+        
+        await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${svToken}` },
+            body: JSON.stringify({ room_id: 1, start_time: s1.toISOString(), end_time: e1.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${svToken}` },
+            body: JSON.stringify({ room_id: 2, start_time: s2.toISOString(), end_time: e2.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        
+        const resTest6 = await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${svToken}` },
+            body: JSON.stringify({ room_id: 3, start_time: s3.toISOString(), end_time: e3.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        if (resTest6.status === 400 && (await resTest6.json()).error.includes('tối đa 2 lượt')) {
+            results.push({ test: 'Giới hạn 2 lượt/ngày', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'Giới hạn 2 lượt/ngày', status: 'KHÔNG ĐẠT' });
+        }
+
+        console.log('\\n--- BÀI TEST 7: ĐẶT QUÁ 3 GIỜ ---');
+        const longEnd = new Date(s3); longEnd.setHours(longEnd.getHours() + 4); // 4 tiếng
+        const resTest7 = await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${gvToken}` },
+            body: JSON.stringify({ room_id: 3, start_time: s3.toISOString(), end_time: longEnd.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        if (resTest7.status === 400 && (await resTest7.json()).error.includes('tối đa 3 giờ')) {
+            results.push({ test: 'Giới hạn 3 giờ', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'Giới hạn 3 giờ', status: 'KHÔNG ĐẠT' });
+        }
+
+        console.log('\\n--- BÀI TEST 8: ĐẶT NGOÀI GIỜ (TRƯỚC 7H) ---');
+        const earlyStart = new Date(s3); earlyStart.setHours(6,0,0,0);
+        const earlyEnd = new Date(s3); earlyEnd.setHours(8,0,0,0);
+        const resTest8 = await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${gvToken}` },
+            body: JSON.stringify({ room_id: 3, start_time: earlyStart.toISOString(), end_time: earlyEnd.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        if (resTest8.status === 400 && (await resTest8.json()).error.includes('07:00 đến 21:00')) {
+            results.push({ test: 'Giới hạn giờ mở cửa', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'Giới hạn giờ mở cửa', status: 'KHÔNG ĐẠT' });
+        }
+
+        console.log('\\n--- BÀI TEST 9: SINH VIÊN ĐẶT PHÒNG GIẢNG VIÊN ---');
+        const gvRoomStart = new Date(s3); gvRoomStart.setHours(9,0,0,0);
+        const gvRoomEnd = new Date(s3); gvRoomEnd.setHours(11,0,0,0);
+        const resTest9 = await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${svToken}` },
+            body: JSON.stringify({ room_id: 4, start_time: gvRoomStart.toISOString(), end_time: gvRoomEnd.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        if (resTest9.status === 403 && (await resTest9.json()).error.includes('không được phép')) {
+            results.push({ test: 'Quyền đặt phòng Giảng viên', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'Quyền đặt phòng Giảng viên', status: 'KHÔNG ĐẠT' });
+        }
+
+        console.log('\\n--- BÀI TEST 10: ĐẶT VÀO QUÁ KHỨ ---');
+        const pastStart = new Date(); pastStart.setDate(pastStart.getDate() - 1);
+        const pastEnd = new Date(pastStart); pastEnd.setHours(pastEnd.getHours() + 2);
+        const resTest10 = await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${gvToken}` },
+            body: JSON.stringify({ room_id: 3, start_time: pastStart.toISOString(), end_time: pastEnd.toISOString(), attendees: 2, purpose: 'Test' })
+        });
+        if (resTest10.status === 400 && (await resTest10.json()).error.includes('quá khứ')) {
+            results.push({ test: 'Giới hạn thời gian quá khứ', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'Giới hạn thời gian quá khứ', status: 'KHÔNG ĐẠT' });
+        }
+
+        console.log('\\n--- BÀI TEST 11: KIỂM TRA API THỐNG KÊ ---');
+        const adminToken = tokens['admin@demo.com'];
+        const resTest11 = await fetch(`${BASE_URL}/stats/dashboard`, {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        const dataTest11 = await resTest11.json();
+        if (resTest11.status === 200 && dataTest11.totalRooms !== undefined && dataTest11.revenue === undefined) {
+            results.push({ test: 'API Thống kê hợp lệ', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'API Thống kê hợp lệ', status: 'KHÔNG ĐẠT' });
+        }
+
     } catch (err) {
         console.error('Lỗi khi chạy test:', err);
     } finally {
         console.log('\\n--- TỔNG KẾT ---');
         console.table(results);
         server.kill();
+        if (fs.existsSync(dbFile)) fs.unlinkSync(dbFile);
         process.exit(0);
     }
 }
