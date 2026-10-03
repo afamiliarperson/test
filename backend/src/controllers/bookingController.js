@@ -75,7 +75,7 @@ const createBooking = (req, res) => {
 
             const stmt = db.prepare(`
                 INSERT INTO bookings (user_id, room_id, start_time, end_time, attendees, purpose, note, status)
-                VALUES (?, ?, datetime(?), datetime(?), ?, ?, ?, 'cho_duyet')
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'cho_duyet')
             `);
             const result = stmt.run(user_id, room_id, start_time, end_time, attendees, purpose, note);
             return result.lastInsertRowid;
@@ -110,13 +110,28 @@ const createBooking = (req, res) => {
 };
 
 const getMyBookings = (req, res) => {
-    const bookings = db.prepare(`
+    const { filter } = req.query;
+    let query = `
         SELECT b.*, r.name as room_name, r.type as room_type 
         FROM bookings b
         JOIN rooms r ON b.room_id = r.id
         WHERE b.user_id = ?
-        ORDER BY b.start_time DESC
-    `).all(req.user.id);
+    `;
+
+    if (filter === 'upcoming') {
+        query += ` AND b.status IN ('cho_duyet', 'da_duyet') AND datetime(b.start_time) >= datetime('now')`;
+        query += ` ORDER BY b.start_time ASC`;
+    } else if (filter === 'past') {
+        query += ` AND (b.status = 'hoan_thanh' OR (b.status IN ('cho_duyet', 'da_duyet') AND datetime(b.end_time) < datetime('now')))`;
+        query += ` ORDER BY b.start_time DESC`;
+    } else if (filter === 'cancelled') {
+        query += ` AND b.status IN ('da_huy', 'tu_choi')`;
+        query += ` ORDER BY b.start_time DESC`;
+    } else {
+        query += ` ORDER BY b.start_time DESC`;
+    }
+
+    const bookings = db.prepare(query).all(req.user.id);
     res.json(bookings);
 };
 

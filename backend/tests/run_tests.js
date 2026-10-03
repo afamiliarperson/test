@@ -229,6 +229,31 @@ async function runTests() {
             results.push({ test: 'API Thống kê hợp lệ', status: 'KHÔNG ĐẠT' });
         }
 
+        console.log('\\n--- BÀI TEST 12: KIỂM TRA HIỂN THỊ LỊCH ĐẶT MỚI TRONG TAB SẮP TỚI ---');
+        // Tạo một lượt đặt ngày mai
+        const tomorrowTest = new Date(); tomorrowTest.setDate(tomorrowTest.getDate() + 1);
+        tomorrowTest.setHours(16,0,0,0); const ttStart = new Date(tomorrowTest);
+        tomorrowTest.setHours(18,0,0,0); const ttEnd = new Date(tomorrowTest);
+        
+        const test12Post = await fetch(`${BASE_URL}/bookings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${gvToken}` },
+            body: JSON.stringify({ room_id: 1, start_time: ttStart.toISOString(), end_time: ttEnd.toISOString(), attendees: 2, purpose: 'Test UI' })
+        });
+
+        // Gọi getMyBookings với filter upcoming
+        const resTest12 = await fetch(`${BASE_URL}/bookings/me?filter=upcoming`, {
+            headers: { 'Authorization': `Bearer ${gvToken}` }
+        });
+        const dataTest12 = await resTest12.json();
+        
+        // Kiểm tra xem lượt đặt vừa tạo có nằm trong mảng dataTest12 không
+        const found = dataTest12.find(b => b.room_id === 1 && b.purpose === 'Test UI');
+        if (resTest12.status === 200 && found) {
+            results.push({ test: 'Hiển thị đúng trong tab Sắp tới', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'Hiển thị đúng trong tab Sắp tới', status: 'KHÔNG ĐẠT' });
+        }
+
     } catch (err) {
         console.error('Lỗi khi chạy test:', err);
     } finally {
