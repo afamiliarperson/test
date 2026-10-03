@@ -6,3 +6,5 @@ build/
 *.sqlite3
 *.db
 .DS_Store
+*.sqlite-shm
+*.sqlite-wal
