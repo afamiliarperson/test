@@ -2,10 +2,15 @@ const db = require('../config/db');
 
 const getAllRooms = (req, res) => {
     // API lấy danh sách phòng có lọc (sức chứa, loại, tòa...)
-    const { capacity, type, building } = req.query;
+    const { capacity, type, building, all } = req.query;
     
-    let query = "SELECT * FROM rooms WHERE status != 'ngung_su_dung'";
+    let query = "SELECT * FROM rooms WHERE 1=1";
     let params = [];
+
+    // Nếu không có param all=true, chỉ hiện phòng hoạt động hoặc bảo trì, ẩn ngưng sử dụng
+    if (!all) {
+        query += " AND status != 'ngung_su_dung'";
+    }
 
     if (capacity) {
         query += ' AND capacity >= ?';
@@ -87,14 +92,32 @@ const createRoom = (req, res) => {
 
 const updateRoom = (req, res) => {
     const { id } = req.params;
-    const { name, type, building, floor, capacity, description, allowed_roles, status } = req.body;
+    const { name, type, building, floor, capacity, description, allowed_roles, status, equipments } = req.body;
 
-    db.prepare(`
-        UPDATE rooms SET name = ?, type = ?, building = ?, floor = ?, capacity = ?, description = ?, allowed_roles = ?, status = ?
-        WHERE id = ?
-    `).run(name, type, building, floor, capacity, description, allowed_roles, status, id);
-    
-    res.json({ message: 'Cập nhật phòng thành công.' });
+    const trx = db.transaction(() => {
+        db.prepare(`
+            UPDATE rooms SET name = ?, type = ?, building = ?, floor = ?, capacity = ?, description = ?, allowed_roles = ?, status = ?
+            WHERE id = ?
+        `).run(name, type, building, floor, capacity, description, allowed_roles, status, id);
+        
+        // Update equipments
+        if (equipments !== undefined) {
+            db.prepare('DELETE FROM room_equipment WHERE room_id = ?').run(id);
+            if (equipments.length > 0) {
+                const insertEq = db.prepare('INSERT INTO room_equipment (room_id, equipment_id) VALUES (?, ?)');
+                for (let eqId of equipments) {
+                    insertEq.run(id, eqId);
+                }
+            }
+        }
+    });
+
+    try {
+        trx();
+        res.json({ message: 'Cập nhật phòng thành công.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Lỗi khi cập nhật phòng.' });
+    }
 };
 
 const deleteRoom = (req, res) => {
@@ -107,9 +130,18 @@ const deleteRoom = (req, res) => {
         res.json({ message: 'Phòng đã có lượt đặt, chuyển trạng thái thành Ngừng sử dụng (Xóa mềm).' });
     } else {
         // Xóa cứng
-        db.prepare('DELETE FROM rooms WHERE id = ?').run(id);
+        const trx = db.transaction(() => {
+            db.prepare('DELETE FROM room_equipment WHERE room_id = ?').run(id);
+            db.prepare('DELETE FROM rooms WHERE id = ?').run(id);
+        });
+        trx();
         res.json({ message: 'Xóa phòng thành công.' });
     }
 };
 
-module.exports = { getAllRooms, getRoomDetails, createRoom, updateRoom, deleteRoom };
+const getAllEquipments = (req, res) => {
+    const eq = db.prepare('SELECT * FROM equipment').all();
+    res.json(eq);
+};
+
+module.exports = { getAllRooms, getRoomDetails, createRoom, updateRoom, deleteRoom, getAllEquipments };

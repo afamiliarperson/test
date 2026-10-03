@@ -3,6 +3,7 @@ const router = express.Router();
 const roomController = require('../controllers/roomController');
 const { authenticate, authorize } = require('../middlewares/authMiddleware');
 
+router.get('/equipments', authenticate, authorize('admin'), roomController.getAllEquipments);
 router.get('/', roomController.getAllRooms);
 router.get('/:id', roomController.getRoomDetails);
 

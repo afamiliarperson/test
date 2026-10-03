@@ -254,6 +254,22 @@ async function runTests() {
             results.push({ test: 'Hiển thị đúng trong tab Sắp tới', status: 'KHÔNG ĐẠT' });
         }
 
+        console.log('\\n--- BÀI TEST 13: KIỂM TRA API ADMIN (STATS, USERS, EQUIPMENTS) ---');
+        const resStats = await fetch(`${BASE_URL}/stats/dashboard?startDate=2020-01-01&endDate=2030-01-01`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
+        const dataStats = await resStats.json();
+        
+        const resUsers = await fetch(`${BASE_URL}/users?role=sinh_vien`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
+        const dataUsers = await resUsers.json();
+        
+        const resEq = await fetch(`${BASE_URL}/rooms/equipments`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
+        const dataEq = await resEq.json();
+
+        if (resStats.status === 200 && dataStats.bookingsByRole && Array.isArray(dataUsers) && Array.isArray(dataEq)) {
+            results.push({ test: 'API Admin hoạt động đúng (Stats, Users, Equipments)', status: 'ĐẠT' });
+        } else {
+            results.push({ test: 'API Admin hoạt động đúng (Stats, Users, Equipments)', status: 'KHÔNG ĐẠT' });
+        }
+
     } catch (err) {
         console.error('Lỗi khi chạy test:', err);
     } finally {

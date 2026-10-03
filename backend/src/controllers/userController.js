@@ -2,7 +2,21 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 const getAllUsers = (req, res) => {
-    const users = db.prepare('SELECT id, email, full_name, role, status, created_at FROM users ORDER BY created_at DESC').all();
+    const { role, search } = req.query;
+    let query = 'SELECT id, email, full_name, role, status, created_at FROM users WHERE 1=1';
+    let params = [];
+
+    if (role) {
+        query += ' AND role = ?';
+        params.push(role);
+    }
+    if (search) {
+        query += ' AND (full_name LIKE ? OR email LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`);
+    }
+
+    query += ' ORDER BY created_at DESC';
+    const users = db.prepare(query).all(...params);
     res.json(users);
 };
 

@@ -165,13 +165,36 @@ const cancelBooking = (req, res) => {
 
 // --- API Admin ---
 const getAllBookings = (req, res) => {
-    const bookings = db.prepare(`
+    const { room_id, user_id, date, status } = req.query;
+    let query = `
         SELECT b.*, r.name as room_name, u.full_name as user_name, u.email
         FROM bookings b
         JOIN rooms r ON b.room_id = r.id
         JOIN users u ON b.user_id = u.id
-        ORDER BY b.start_time DESC
-    `).all();
+        WHERE 1=1
+    `;
+    let params = [];
+
+    if (room_id) {
+        query += " AND b.room_id = ?";
+        params.push(room_id);
+    }
+    if (user_id) {
+        query += " AND b.user_id = ?";
+        params.push(user_id);
+    }
+    if (date) {
+        query += " AND date(b.start_time) = ?";
+        params.push(date);
+    }
+    if (status) {
+        query += " AND b.status = ?";
+        params.push(status);
+    }
+
+    query += " ORDER BY b.start_time DESC";
+    
+    const bookings = db.prepare(query).all(...params);
     res.json(bookings);
 };
 
