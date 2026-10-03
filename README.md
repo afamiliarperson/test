@@ -27,10 +27,19 @@ npm install
 node scripts/init_db.js
 ```
 
-### Chạy Server
+### Chạy Server (Backend)
 ```bash
+cd backend
 npm run dev
 # Server sẽ chạy tại http://localhost:5000
+```
+
+### Chạy Ứng dụng (Frontend)
+```bash
+cd frontend
+npm install
+npm run dev
+# Mở trình duyệt tại URL hiển thị ở Terminal (ví dụ: http://localhost:5173)
 ```
 
 ### Các API chính (Tóm tắt)
