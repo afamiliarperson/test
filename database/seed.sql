@@ -6,18 +6,41 @@ INSERT INTO users (email, password, full_name, role, status) VALUES
 ('gv@demo.com', '$2b$10$IaVOZ62b8d0InXUOAdHhSORkZHrUI50n6l/QVasXAL.pN.wsoXnlO', 'Giảng viên Trần Văn A', 'giang_vien', 'active'),
 ('sv@demo.com', '$2b$10$IaVOZ62b8d0InXUOAdHhSORkZHrUI50n6l/QVasXAL.pN.wsoXnlO', 'Sinh viên Nguyễn Văn B', 'sinh_vien', 'active');
 
+-- Dữ liệu thiết bị (7 thiết bị)
+INSERT INTO equipment (id, name) VALUES
+(1, 'Máy chiếu'),
+(2, 'TV'),
+(3, 'Bảng trắng'),
+(4, 'Micro'),
+(5, 'Camera'),
+(6, 'Máy lạnh'),
+(7, 'Ổ cắm');
+
 -- Dữ liệu phòng học (10 phòng)
-INSERT INTO rooms (name, type, building, floor, capacity, equipment, description, allowed_roles, status) VALUES
-('Phòng họp nhóm 101', 'nhom', 'Tòa A', 1, 10, 'Bảng trắng, Tivi', 'Phòng họp nhóm nhỏ', 'sinh_vien,giang_vien', 'hoat_dong'),
-('Phòng họp nhóm 102', 'nhom', 'Tòa A', 1, 15, 'Bảng trắng, Máy chiếu', 'Phòng họp nhóm vừa', 'sinh_vien,giang_vien', 'hoat_dong'),
-('Phòng họp nhóm 103', 'nhom', 'Tòa A', 1, 5, 'Bảng trắng', 'Phòng học cá nhân/nhóm siêu nhỏ', 'sinh_vien,giang_vien', 'hoat_dong'),
-('Phòng chuyên đề 201', 'nhom', 'Tòa B', 2, 30, 'Bảng trắng, Máy chiếu, Âm thanh', 'Phòng sinh hoạt chuyên đề', 'giang_vien', 'hoat_dong'),
-('Phòng chuyên đề 202', 'nhom', 'Tòa B', 2, 25, 'Bảng trắng, Máy chiếu', 'Phòng thảo luận', 'giang_vien', 'bao_tri'),
-('Phòng nghiên cứu 301', 'nhom', 'Tòa C', 3, 8, 'Tivi, Bảng tương tác', 'Dành riêng cho giảng viên', 'giang_vien', 'hoat_dong'),
-('Phòng trực tuyến 1', 'truc_tuyen', '', 0, 50, 'Zoom Pro', 'Phòng học trực tuyến sức chứa 50', 'sinh_vien,giang_vien', 'hoat_dong'),
-('Phòng trực tuyến 2', 'truc_tuyen', '', 0, 100, 'Google Meet', 'Phòng học trực tuyến sức chứa 100', 'sinh_vien,giang_vien', 'hoat_dong'),
-('Phòng trực tuyến 3 (VIP)', 'truc_tuyen', '', 0, 300, 'Webex', 'Phòng hội thảo trực tuyến lớn', 'giang_vien', 'hoat_dong'),
-('Phòng họp nhóm 104', 'nhom', 'Tòa A', 1, 12, 'Bảng trắng', 'Phòng họp nhóm', 'sinh_vien,giang_vien', 'hoat_dong');
+INSERT INTO rooms (id, name, type, building, floor, capacity, description, allowed_roles, status) VALUES
+(1, 'Phòng họp nhóm 101', 'nhom', 'Tòa A', 1, 10, 'Phòng họp nhóm nhỏ', 'sinh_vien,giang_vien', 'hoat_dong'),
+(2, 'Phòng họp nhóm 102', 'nhom', 'Tòa A', 1, 15, 'Phòng họp nhóm vừa', 'sinh_vien,giang_vien', 'hoat_dong'),
+(3, 'Phòng họp nhóm 103', 'nhom', 'Tòa A', 1, 5, 'Phòng học cá nhân/nhóm siêu nhỏ', 'sinh_vien,giang_vien', 'hoat_dong'),
+(4, 'Phòng chuyên đề 201', 'nhom', 'Tòa B', 2, 30, 'Phòng sinh hoạt chuyên đề', 'giang_vien', 'hoat_dong'),
+(5, 'Phòng chuyên đề 202', 'nhom', 'Tòa B', 2, 25, 'Phòng thảo luận', 'giang_vien', 'bao_tri'),
+(6, 'Phòng nghiên cứu 301', 'nhom', 'Tòa C', 3, 8, 'Dành riêng cho giảng viên', 'giang_vien', 'hoat_dong'),
+(7, 'Phòng trực tuyến 1', 'truc_tuyen', '', 0, 50, 'Phòng học trực tuyến sức chứa 50', 'sinh_vien,giang_vien', 'hoat_dong'),
+(8, 'Phòng trực tuyến 2', 'truc_tuyen', '', 0, 100, 'Phòng học trực tuyến sức chứa 100', 'sinh_vien,giang_vien', 'hoat_dong'),
+(9, 'Phòng trực tuyến 3 (VIP)', 'truc_tuyen', '', 0, 300, 'Phòng hội thảo trực tuyến lớn', 'giang_vien', 'hoat_dong'),
+(10, 'Phòng họp nhóm 104', 'nhom', 'Tòa A', 1, 12, 'Phòng họp nhóm', 'sinh_vien,giang_vien', 'hoat_dong');
+
+-- Dữ liệu liên kết thiết bị và phòng (mỗi phòng 2-3 thiết bị)
+INSERT INTO room_equipment (room_id, equipment_id) VALUES
+(1, 3), (1, 6), (1, 7),
+(2, 1), (2, 3), (2, 6),
+(3, 3), (3, 7),
+(4, 1), (4, 3), (4, 4), (4, 6),
+(5, 1), (5, 3),
+(6, 2), (6, 3), (6, 6),
+(7, 4), (7, 5),
+(8, 4), (8, 5), (8, 2),
+(9, 1), (9, 4), (9, 5), (9, 6),
+(10, 3), (10, 6), (10, 7);
 
 -- Dữ liệu lượt đặt phòng (30 lượt mẫu)
 -- Lượt của sinh viên (user_id = 3)

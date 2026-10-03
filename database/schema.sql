@@ -19,11 +19,25 @@ CREATE TABLE IF NOT EXISTS rooms (
     building TEXT,
     floor INTEGER,
     capacity INTEGER NOT NULL,
-    equipment TEXT, 
     description TEXT,
     allowed_roles TEXT NOT NULL, 
     status TEXT CHECK(status IN ('hoat_dong', 'bao_tri', 'ngung_su_dung')) NOT NULL DEFAULT 'hoat_dong',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng thiết bị
+CREATE TABLE IF NOT EXISTS equipment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+);
+
+-- Bảng liên kết phòng và thiết bị
+CREATE TABLE IF NOT EXISTS room_equipment (
+    room_id INTEGER NOT NULL,
+    equipment_id INTEGER NOT NULL,
+    PRIMARY KEY (room_id, equipment_id),
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE
 );
 
 -- Bảng bookings
