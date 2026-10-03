@@ -1,6 +1,5 @@
 const Database = require('better-sqlite3');
 const path = require('path');
-require('dotenv').config();
 
 const dbFile = process.env.DB_FILE 
     ? path.resolve(__dirname, '../../', process.env.DB_FILE) 

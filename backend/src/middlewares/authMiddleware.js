@@ -10,7 +10,7 @@ const authenticate = (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         // Kiểm tra xem user có bị khóa không
         const user = db.prepare('SELECT status, role FROM users WHERE id = ?').get(decoded.id);

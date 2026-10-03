@@ -12,6 +12,11 @@ const statRoutes = require('./src/routes/statRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your_jwt_secret_key_here') {
+    console.error('LỖI NGHIÊM TRỌNG: JWT_SECRET chưa được thiết lập đúng trong file .env. Vui lòng cấu hình JWT_SECRET an toàn.');
+    process.exit(1);
+}
+
 app.use(cors());
 app.use(express.json());
 
